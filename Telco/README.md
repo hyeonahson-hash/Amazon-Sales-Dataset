@@ -1,64 +1,77 @@
-# AutoGluon을 활용한 통신사 고객 이탈 예측
+# 📱 Telco Customer Churn Prediction: 이탈 방지를 위한 정밀 타격 모델링
 
-이 프로젝트는 **Telco Customer Churn** 데이터셋을 분석하고 **AutoGluon**을 사용하여 이탈 위험이 있는 고객을 식별하는 예측 모델을 구축합니다. 워크플로우에는 포괄적인 데이터 분석, 전처리, 특성 공학(Feature Engineering) 및 AutoML 모델링이 포함됩니다.
+> **"고객은 왜 떠나는가?"** 본 프로젝트는 통신사 고객 데이터를 심층 분석하여 이탈 원인을 데이터로 증명하고, 최신 AutoML(AutoGluon)과 하이퍼파라미터 최적화(Optuna)를 활용하여 최적의 이탈 예측 솔루션을 구축합니다.
 
-## 📂 프로젝트 구조
-- `TelcoCustomerChurn_with_autogluon_ver2.ipynb`: 전체 분석 및 모델링 파이프라인이 포함된 메인 Jupyter 노트북입니다.
-- `WA_Fn-UseC_-Telco-Customer-Churn.csv`: 분석에 사용된 데이터셋입니다.
-- `assets/`: 생성된 시각화 이미지가 저장된 디렉토리입니다.
+---
 
-## 📊 데이터셋 개요
-이 데이터셋은 통신사의 고객 정보를 포함하고 있습니다. 타겟 변수는 `Churn` (이탈 여부: Yes/No)입니다.
-주요 특성:
-- **인구통계 정보**: Gender(성별), SeniorCitizen(고령자 여부), Partner(배우자 유무), Dependents(부양가족 유무).
-- **서비스 가입 정보**: PhoneService, MultipleLines, InternetService, OnlineSecurity 등.
-- **계정 정보**: Contract(계약 형태), PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges, Tenure(가입 기간).
+## 1. 프로젝트 주제
+- **목표**: 고객 이탈(Churn) 패턴 분석 및 예측 모델을 통한 리텐션 전략 수립
+- **핵심 과제**: 
+    - 가입 기간, 결제 수단, 인구통계학적 특성에 따른 이탈 트리거 발굴
+    - 특성 공학(Feature Engineering)을 통한 모델 예측력 극대화
+    - AutoGluon 앙상블과 Optuna-LightGBM 간의 성능 비교 분석
 
-## 🛠 전처리 및 특성 공학 (Preprocessing & Feature Engineering)
+## 2. 데이터 셋 개요
+- **Source**: Kaggle Telco Customer Churn Dataset
+- **Size**: 7,043 rows, 21 columns
+- **Target**: `Churn_Numeric` (0: 유지, 1: 이탈)
 
-### 1. 데이터 클리닝
-- **TotalCharges**: 빈 문자열 값이 포함되어 있어 `NaN`으로 변환한 후, 수치 분석이 가능하도록 `0`으로 채웠습니다.
-- **Churn**: 상관관계 분석을 위해 타겟 컬럼을 인코딩(Yes=1, No=0) 했습니다 (AutoGluon은 원본 라벨을 자동으로 처리합니다).
+---
 
-### 2. 특성 공학 (Feature Engineering)
-모델 성능 향상을 위해 다음과 같은 파생 변수를 추가했습니다:
-- **`TenureGroup`**: 가입 기간에 따른 행동 패턴을 파악하기 위해 고객을 기간별 그룹(예: '0-1 Year', '1-2 Years', '5+ Years')으로 분류했습니다.
-- **`ServiceCount`**: 각 고객이 가입한 부가 서비스(OnlineSecurity, TechSupport, StreamingTV 등)의 총 개수를 계산했습니다. 이는 고객의 서비스 관여도를 정량화하는 데 도움이 됩니다.
+## 3. 탐색적 데이터 분석 (EDA) & Deep Insights
+노트북 분석 과정에서 도출된 5가지 핵심 유의미 컬럼별 인사이트입니다.
 
-## 📈 탐색적 데이터 분석 (EDA)
+### ⏳ 3.1 가입 기간 (Tenure): "초기 6개월의 높은 장벽"
+* **Fact**: 이탈 고객의 상당수가 가입 초기 **1~6개월**에 집중되어 있으며, 24개월 이상 유지 시 이탈률이 급격히 낮아짐.
+* **Insight**: 신규 고객 대상의 웰컴 프로모션과 초기 서비스 적응 지원(On-boarding)이 장기 고객 전환의 핵심임.
 
-### 1. 이탈 여부 분포 (Churn Distribution)
-전체 이탈률을 시각화하여 클래스 불균형을 파악합니다.
-![이탈 여부 분포](assets/churn_distribution.png)
+### 💳 3.2 결제 수단 (Payment Method): "수동 결제의 심리적 저항"
+* **Fact**: **Electronic check** 결제 고객의 이탈률이 자동 결제(신용카드/은행이체) 고객보다 약 2.5배 높음.
+* **Insight**: 매달 직접 결제하는 방식은 요금 체감도를 높여 이탈을 유발함. 자동이체 전환 시 혜택을 주는 전략적 유도가 필요함.
 
-### 2. 성별에 따른 이탈률 (Churn by Gender)
-성별에 따른 이탈률의 차이를 분석합니다.
-![성별에 따른 이탈률](assets/churn_by_gender.png)
+### 👴 3.3 연령대 (Senior Citizen): "고령층의 취약한 연결성"
+* **Fact**: 고령층(Senior Citizen)의 비중은 낮으나 이탈률은 젊은 층보다 높으며, 특히 기술 지원 서비스 부재 시 이탈률이 상승함.
+* **Insight**: 고령층 고객을 위한 전담 기술 지원이나 단순화된 서비스 패키지 제안이 이탈 방지에 효과적임.
 
-### 3. 계약 형태별 서비스 이용 현황 (Service Usage by Contract Type)
-계약 기간(Month-to-month, One year, Two year)에 따라 가입한 서비스 수가 어떻게 달라지는지 조사합니다.
-![계약 형태별 서비스 이용 수](assets/service_count_by_contract.png)
+### 🛠 3.4 부가 서비스 (Services): "결합할수록 강력해지는 락인(Lock-in)"
+* **Fact**: Online Security, Tech Support 등 **부가 서비스를 3개 이상** 사용하는 고객은 1개 이하 사용 고객보다 이탈률이 현저히 낮음.
+* **Insight**: 단순 인터넷 판매를 넘어 보안 및 지원 서비스를 결합한 패키지 판매가 고객의 스위칭 비용(Switching Cost)을 높임.
 
-## 🤖 AutoGluon을 이용한 모델링
+### 👨‍👩‍👧‍👦 3.5 가족 형태 (Partner & Dependents): "가구 단위 결합의 안정성"
+* **Fact**: 배우자(Partner)와 부양가족(Dependents)이 모두 있는 가구는 1인 가구 대비 가입 기간이 길고 요금 민감도가 낮음.
+* **Insight**: 1인 가구에게는 가격 혜택을, 가족 단위 고객에게는 가족 결합 공유 데이터를 강조하는 차별화된 타겟팅이 필요함.
 
-이 프로젝트는 자동화된 머신러닝을 위해 **AutoGluon의 `TabularPredictor`**를 사용합니다. AutoGluon은 자동으로 다음을 수행합니다:
-- 데이터 타입을 추론하고 특성을 처리합니다.
-- 여러 모델(GBM, CatBoost, RandomForest, Neural Networks 등)을 학습시킵니다.
-- 성능을 극대화하기 위해 최적의 모델들을 스태킹(Stacking)하고 앙상블(Ensemble)합니다.
-- 홀드아웃 검증 세트를 사용하여 모델을 평가합니다.
+---
 
-### 사용법
-```python
-from autogluon.tabular import TabularPredictor
+## 4. 특성 공학 (Feature Engineering)
+데이터의 숨겨진 의미를 찾기 위해 다음 파생 변수를 생성하여 모델에 투입했습니다.
+- **`Fiber_Price_Impact`**: 광랜 사용자 중 평균 대비 요금 부담 정도를 수치화 (모델 기여도 Top 5)
+- **`ServiceCount`**: 총 부가 서비스 이용 개수 (고객 고착도 측정)
+- **`Fiber_Premium_Ratio`**: 전체 요금 중 인터넷 요금이 차지하는 비중 계산
+- **`LongTerm_Complexity_Risk`**: 장기 고객 중 서비스 이용이 단순하여 이탈 징후가 보이는 군 식별
 
-predictor = TabularPredictor(label='Churn', eval_metric='accuracy').fit(train_data)
-predictor.leaderboard()
-```
+---
 
-## 🏆 결과
-노트북은 정확도(및 ROC-AUC와 같은 기타 지표) 순으로 정렬된 모델 리더보드를 생성합니다. 최종 앙상블 모델은 테스트 세트에서 강력한 예측 성능을 제공합니다.
+## 5. 모델링 분석 및 성능 비교표
 
-## 🚀 실행 방법
-1. 의존성 패키지 설치: `pip install pandas matplotlib seaborn autogluon`
-2. `TelcoCustomerChurn_with_autogluon_ver2.ipynb` 노트북을 실행합니다.
-   - *참고: 이 README의 이미지를 다시 생성하려면 노트북(또는 제공된 헬퍼 스크립트 `generate_assets.py`)을 실행해야 합니다.*
+| 평가 항목 | **Optuna (LightGBM)** | **AutoGluon (Ensemble)** | 비고 |
+| :--- | :---: | :---: | :--- |
+| **ROC-AUC** | 0.8407 | **0.8465** | **AutoGluon 우세** |
+| **Accuracy** | **0.8070** | 0.8048 | Optuna 우세 |
+| **Precision** | 0.6300 | **0.6713** | AutoGluon 승 (오진율 낮음) |
+| **Recall** | **0.5300** | 0.5187 | Optuna 승 (탐지율 높음) |
+
+---
+
+## 6. 최종 결과 및 시사점
+- **최종 모델**: AutoGluon의 `WeightedEnsemble_L2` (AUC 0.8465) 채택
+- **비즈니스 결론**: 
+    1. 이탈 위험 상위 100명 명단 추출 결과, 대부분 **월 단위 계약 + 광랜 사용자**임을 확인.
+    2. 이들을 대상으로 '장기 약정 전환 시 요금 할인' 캠페인 우선 집행 제언.
+    3. 데이터 기반의 `Fiber_Price_Impact` 변수가 이탈 예측에 결정적 역할을 함을 입증.
+
+---
+### 🛠 기술 스택 (Tech Stack)
+- **Python**, **Pandas**, **Scikit-learn**
+- **Visualization**: Matplotlib, Seaborn
+- **Machine Learning**: **AutoGluon**, **Optuna**, **LightGBM**
