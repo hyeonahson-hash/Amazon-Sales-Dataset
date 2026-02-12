@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
     *   평가 정보: `rating`, `rating_count`
     *   기타: `img_link`, `product_link` (모델링 시 제외)
 
-![alt text](image-1.png)
+   ![alt text](image-1.png)
 
 ## 3. 데이터 전처리 (Data Preprocessing) 및 탐색적 데이터 분석(EDA)
 Raw Data를 분석 및 모델링에 적합한 형태로 정제하였습니다.
@@ -65,7 +65,7 @@ Raw Data를 분석 및 모델링에 적합한 형태로 정제하였습니다.
     print(df.info())
     ```
 
-![alt text](image-3.png)
+   ![alt text](image-3.png)
 
 2.  **카테고리 분리**:
     *   `category` 컬럼을 `|` 기준으로 분리하여 `main_category`와 `sub_category`를 추출했습니다.
@@ -274,4 +274,5 @@ Raw Data를 분석 및 모델링에 적합한 형태로 정제하였습니다.
 *   **데이터 편향성**: 수집된 데이터의 90% 이상이 평점 3.5~4.5점 사이에 집중되어 있어, '성공하지 못한 제품(낮은 평점)'에 대한 학습 사례가 부족한 한계가 있습니다.
     ![alt text](image-26.png)
 *   **평점 타겟의 한계**: 단순히 rating만을 타겟으로 설정했을 때는 데이터의 상향 평준화로 인해 변별력이 낮았으나 Success Score를 통해 이를 극복했습니다.
+
 *   **R² 점수에 대한 해석**: 매우 높은 예측 성능은 Success Score 구성 요소인 rating_count의 로그 변환값이 모델 학습에 지배적인 역할을 했기 때문으로 분석됩니다.
